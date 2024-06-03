@@ -3,15 +3,15 @@ import { useState } from "react";
 import { Button, Wrapper } from "./styles";
 import Input from "../input";
 import InputTextarea from "../textarea";
-import { each, find, get, replace, set, size, toUpper } from "lodash";
+import { each, find, get, replace, set, size, toUpper, unset } from "lodash";
 
 const ConverterComponent = (props) => {
   const [awsAccountId, setAwsAccountId] = useState("");
   const [awsInternalUrl, setAwsInternalUrl] = useState("");
   const [awsDefaultRegion, setAwsDefaultRegion] = useState("");
   const [awsVPCLinkId, setAwsVPCLinkId] = useState("");
-  const [awsHost, setAwsHost] = useState("");
-  const [awsBasePath, setAwsBasePath] = useState("");
+  // const [awsHost, setAwsHost] = useState("");
+  // const [awsBasePath, setAwsBasePath] = useState("");
   const [jsonInput, setJsonInput] = useState("");
   const [jsonOutput, setJsonOutput] = useState("");
 
@@ -40,17 +40,17 @@ const ConverterComponent = (props) => {
     const data = JSON.parse(jsonInput);
 
     // Adds host
-    if (size(awsHost) > 0) {
-      set(data, "host", awsHost);
-    }
+    // if (size(awsHost) > 0) {
+    //   set(data, "host", awsHost);
+    // }
 
     // Adds basePath
-    if (size(awsBasePath) > 0) {
-      set(data, "basePath", awsBasePath);
-    }
+    // if (size(awsBasePath) > 0) {
+    //   set(data, "basePath", awsBasePath);
+    // }
 
     // Adds schemes
-    set(data, "schemes", ["https"]);
+    // set(data, "schemes", ["https"]);
 
     each(data.paths, (path, endpoint) => {
       let hasOptions = false;
@@ -61,12 +61,14 @@ const ConverterComponent = (props) => {
         if (toUpper(type) === "OPTIONS") {
           hasOptions = true;
         } else {
+          unset(method, "tags");
           set(method, "x-amazon-apigateway-integration", {
             connectionId: awsVPCLinkId,
             connectionType: "VPC_LINK",
             httpMethod: toUpper(type),
             type: "http_proxy",
             uri: `${awsInternalUrl}${endpoint}`,
+            passthroughBehavior: "when_no_match",
           });
 
           if (method.parameters) {
@@ -79,22 +81,29 @@ const ConverterComponent = (props) => {
               }
             });
           }
+
+          if (method.responses) {
+            each(method.responses, (response) => {
+              set(response, "content", {});
+            });
+          }
         }
       });
 
       // Adds OPTIONS method
       if (!hasOptions) {
         set(path, "options", {
-          consumes: ["application/json"],
-          parameters: parameters,
+          // consumes: ["application/json"],
+          parameters: size(parameters) > 0 ? parameters : undefined,
           responses: {
             200: {
               description: "200 response",
               headers: {
-                "Access-Control-Allow-Origin": { type: "string" },
-                "Access-Control-Allow-Methods": { type: "string" },
-                "Access-Control-Allow-Headers": { type: "string" },
+                "Access-Control-Allow-Origin": { schema: { type: "string" } },
+                "Access-Control-Allow-Methods": { schema: { type: "string" } },
+                "Access-Control-Allow-Headers": { schema: { type: "string" } },
               },
+              content: {},
             },
           },
           "x-amazon-apigateway-integration": {
@@ -133,7 +142,28 @@ const ConverterComponent = (props) => {
     let uri = get(authorizer, "authorizerUri");
     uri = replace(uri, "aws-account-id", awsAccountId);
     uri = replace(uri, "aws-default-region", awsDefaultRegion);
+    uri = replace(uri, "aws-default-region", awsDefaultRegion); // There's two occurences (function didn't work)
     set(authorizer, "authorizerUri", uri);
+
+    // set gateway responses
+    set(data, "x-amazon-apigateway-gateway-responses", {
+      DEFAULT_4XX: {
+        responseParameters: {
+          "gatewayresponse.header.Access-Control-Allow-Methods": "OPTIONS",
+          "gatewayresponse.header.Access-Control-Allow-Headers":
+            "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,User-Agent,Accept",
+          "gatewayresponse.header.Access-Control-Allow-Origin": "*",
+        },
+      },
+      DEFAULT_5XX: {
+        responseParameters: {
+          "gatewayresponse.header.Access-Control-Allow-Methods": "OPTIONS",
+          "gatewayresponse.header.Access-Control-Allow-Headers":
+            "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,User-Agent,Accept",
+          "gatewayresponse.header.Access-Control-Allow-Origin": "*",
+        },
+      },
+    });
 
     setJsonOutput(JSON.stringify(data));
   };
@@ -154,20 +184,20 @@ const ConverterComponent = (props) => {
         value={awsDefaultRegion}
         onChange={(e) => setAwsDefaultRegion(e.target.value)}
       />
-      <Input
+      {/* <Input
         name="awsHost"
         label="AWS application Host/Address"
         type="text"
         value={awsHost}
         onChange={(e) => setAwsHost(e.target.value)}
-      />
-      <Input
+      /> */}
+      {/* <Input
         name="awsBasePath"
         label="AWS application basePath (with slash)"
         type="text"
         value={awsBasePath}
         onChange={(e) => setAwsBasePath(e.target.value)}
-      />
+      /> */}
       <Input
         name="awsInternalUrl"
         label="AWS Internal APP URL"
