@@ -112,10 +112,10 @@ const ConverterComponent = (props) => {
                 statusCode: "200",
                 responseParameters: {
                   "method.response.header.Access-Control-Allow-Methods":
-                    "OPTIONS",
+                    "'OPTIONS'",
                   "method.response.header.Access-Control-Allow-Headers":
-                    "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-                  "method.response.header.Access-Control-Allow-Origin": "*",
+                    "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                  "method.response.header.Access-Control-Allow-Origin": "'*'",
                 },
               },
             },
@@ -149,18 +149,22 @@ const ConverterComponent = (props) => {
     set(data, "x-amazon-apigateway-gateway-responses", {
       DEFAULT_4XX: {
         responseParameters: {
-          "gatewayresponse.header.Access-Control-Allow-Methods": "OPTIONS",
+          "gatewayresponse.header.Access-Control-Allow-Methods": "'OPTIONS'",
           "gatewayresponse.header.Access-Control-Allow-Headers":
-            "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,User-Agent,Accept",
-          "gatewayresponse.header.Access-Control-Allow-Origin": "*",
+            // eslint-disable-next-line no-multi-str
+            "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,\
+            \ User-Agent, Accept'",
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
         },
       },
       DEFAULT_5XX: {
         responseParameters: {
-          "gatewayresponse.header.Access-Control-Allow-Methods": "OPTIONS",
+          "gatewayresponse.header.Access-Control-Allow-Methods": "'OPTIONS'",
           "gatewayresponse.header.Access-Control-Allow-Headers":
-            "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,User-Agent,Accept",
-          "gatewayresponse.header.Access-Control-Allow-Origin": "*",
+            // eslint-disable-next-line no-multi-str
+            "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,\
+            \ User-Agent, Accept'",
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
         },
       },
     });
