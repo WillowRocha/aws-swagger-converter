@@ -82,6 +82,21 @@ const ConverterComponent = (props) => {
             });
           }
 
+          // If secured endpoint, adds authorization header
+          if (size(method.security) > 0) {
+            if (!method.parameters) {
+              set(method, "parameters", []);
+            }
+            method.parameters.push({
+              name: "Authorization",
+              in: "header",
+              required: true,
+              schema: {
+                type: "string",
+              },
+            });
+          }
+
           if (method.responses) {
             each(method.responses, (response) => {
               set(response, "content", {});
@@ -153,7 +168,7 @@ const ConverterComponent = (props) => {
           "gatewayresponse.header.Access-Control-Allow-Headers":
             // eslint-disable-next-line no-multi-str
             "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,\
-            \ User-Agent, Accept'",
+             User-Agent, Accept'",
           "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
         },
       },
@@ -163,7 +178,7 @@ const ConverterComponent = (props) => {
           "gatewayresponse.header.Access-Control-Allow-Headers":
             // eslint-disable-next-line no-multi-str
             "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,\
-            \ User-Agent, Accept'",
+             User-Agent, Accept'",
           "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
         },
       },
