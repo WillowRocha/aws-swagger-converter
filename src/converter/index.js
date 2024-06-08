@@ -3,7 +3,17 @@ import { useState } from "react";
 import { Button, Wrapper } from "./styles";
 import Input from "../input";
 import InputTextarea from "../textarea";
-import { each, find, get, replace, set, size, toUpper, unset } from "lodash";
+import {
+  each,
+  find,
+  get,
+  map,
+  replace,
+  set,
+  size,
+  toUpper,
+  unset,
+} from "lodash";
 
 const ConverterComponent = (props) => {
   const [awsAccountId, setAwsAccountId] = useState("");
@@ -54,34 +64,15 @@ const ConverterComponent = (props) => {
 
     each(data.paths, (path, endpoint) => {
       let hasOptions = false;
-      const parameters = [];
+      const pathParameters = [];
 
       // Adds API Gateway configuration
       each(path, (method, type) => {
+        const requestParameters = {};
+
         if (toUpper(type) === "OPTIONS") {
           hasOptions = true;
         } else {
-          unset(method, "tags");
-          set(method, "x-amazon-apigateway-integration", {
-            connectionId: awsVPCLinkId,
-            connectionType: "VPC_LINK",
-            httpMethod: toUpper(type),
-            type: "http_proxy",
-            uri: `${awsInternalUrl}${endpoint}`,
-            passthroughBehavior: "when_no_match",
-          });
-
-          if (method.parameters) {
-            each(method.parameters, (param) => {
-              if (
-                param.in === "path" &&
-                find(parameters, (it) => it.name === param.name) === undefined
-              ) {
-                parameters.push(param);
-              }
-            });
-          }
-
           // If secured endpoint, adds authorization header
           if (size(method.security) > 0) {
             if (!method.parameters) {
@@ -97,6 +88,38 @@ const ConverterComponent = (props) => {
             });
           }
 
+          // If has parameters filter path and add requests parameters to be added in amazon-apigateway configuration
+          if (method.parameters) {
+            each(method.parameters, (param) => {
+              if (
+                param.in === "path" &&
+                find(pathParameters, (it) => it.name === param.name) ===
+                  undefined
+              ) {
+                pathParameters.push(param);
+              }
+              const paramType = param.in === "query" ? "querystring" : param.in;
+              requestParameters[
+                `integration.request.${paramType}.${param.name}`
+              ] = `method.request.${paramType}.${param.name}`;
+            });
+          }
+
+          unset(method, "tags");
+
+          // Adds amazon-apigateway configuration
+          set(method, "x-amazon-apigateway-integration", {
+            connectionId: awsVPCLinkId,
+            connectionType: "VPC_LINK",
+            httpMethod: toUpper(type),
+            type: "http_proxy",
+            uri: `${awsInternalUrl}${endpoint}`,
+            passthroughBehavior: "when_no_match",
+            responses: { default: { statusCode: "200" } },
+            requestParameters,
+          });
+
+          // Set content for each response
           if (method.responses) {
             each(method.responses, (response) => {
               set(response, "content", {});
@@ -109,7 +132,7 @@ const ConverterComponent = (props) => {
       if (!hasOptions) {
         set(path, "options", {
           // consumes: ["application/json"],
-          parameters: size(parameters) > 0 ? parameters : undefined,
+          parameters: size(pathParameters) > 0 ? pathParameters : undefined,
           responses: {
             200: {
               description: "200 response",
