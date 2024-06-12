@@ -7,6 +7,7 @@ import {
   each,
   find,
   get,
+  join,
   map,
   replace,
   set,
@@ -65,6 +66,7 @@ const ConverterComponent = (props) => {
     each(data.paths, (path, endpoint) => {
       let hasOptions = false;
       const pathParameters = [];
+      const methods = ['OPTIONS'];
 
       // Adds API Gateway configuration
       each(path, (method, type) => {
@@ -73,6 +75,7 @@ const ConverterComponent = (props) => {
         if (toUpper(type) === "OPTIONS") {
           hasOptions = true;
         } else {
+          methods.push(toUpper(type));
           // If secured endpoint, adds authorization header
           if (size(method.security) > 0) {
             if (!method.parameters) {
@@ -150,7 +153,7 @@ const ConverterComponent = (props) => {
                 statusCode: "200",
                 responseParameters: {
                   "method.response.header.Access-Control-Allow-Methods":
-                    "'OPTIONS'",
+                    `'${join(methods, ',')}'`,
                   "method.response.header.Access-Control-Allow-Headers":
                     "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
                   "method.response.header.Access-Control-Allow-Origin": "'*'",
