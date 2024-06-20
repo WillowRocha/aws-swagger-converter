@@ -63,10 +63,28 @@ const ConverterComponent = (props) => {
     // Adds schemes
     // set(data, "schemes", ["https"]);
 
+    // Adds health check resource path
+    set(data.paths, "/actuator/health", {
+      get: {
+        tags: ["actuator-health"],
+        operationId: "actuatorHealth",
+        responses: {
+          500: {
+            description: "Ocorreu algum erro interno",
+            content: { "application/json": {} },
+          },
+          200: {
+            description: "Tudo funcionou como esperado",
+            content: { "application/json": {} },
+          },
+        },
+      },
+    });
+
     each(data.paths, (path, endpoint) => {
       let hasOptions = false;
       const pathParameters = [];
-      const methods = ['OPTIONS'];
+      const methods = ["OPTIONS"];
 
       // Adds API Gateway configuration
       each(path, (method, type) => {
@@ -152,8 +170,10 @@ const ConverterComponent = (props) => {
               default: {
                 statusCode: "200",
                 responseParameters: {
-                  "method.response.header.Access-Control-Allow-Methods":
-                    `'${join(methods, ',')}'`,
+                  "method.response.header.Access-Control-Allow-Methods": `'${join(
+                    methods,
+                    ","
+                  )}'`,
                   "method.response.header.Access-Control-Allow-Headers":
                     "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
                   "method.response.header.Access-Control-Allow-Origin": "'*'",
@@ -252,7 +272,7 @@ const ConverterComponent = (props) => {
       />
       <Input
         name="awsVPCLinkId"
-        label="AWS VPN Link ID"
+        label="AWS VPC Link ID"
         type="text"
         value={awsVPCLinkId}
         onChange={(e) => setAwsVPCLinkId(e.target.value)}
