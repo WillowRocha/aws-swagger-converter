@@ -8,7 +8,6 @@ import {
   find,
   get,
   join,
-  map,
   replace,
   set,
   size,
@@ -119,10 +118,15 @@ const ConverterComponent = (props) => {
               ) {
                 pathParameters.push(param);
               }
-              const paramType = param.in === "query" ? "querystring" : param.in;
-              requestParameters[
-                `integration.request.${paramType}.${param.name}`
-              ] = `method.request.${paramType}.${param.name}`;
+              if (param.in !== "query") {
+                requestParameters[
+                  `integration.request.${param.in}.${param.name}`
+                ] = `method.request.${param.in}.${param.name}`;
+              }
+              // const paramType = param.in === "query" ? "querystring" : param.in;
+              // requestParameters[
+              //   `integration.request.${paramType}.${param.name}`
+              // ] = `method.request.${paramType}.${param.name}`;
             });
           }
 
