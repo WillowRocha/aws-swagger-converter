@@ -8,10 +8,12 @@ import {
   find,
   get,
   join,
+  last,
   replace,
   set,
   size,
   toUpper,
+  trimEnd,
   unset,
 } from "lodash";
 
@@ -132,13 +134,20 @@ const ConverterComponent = (props) => {
 
           unset(method, "tags");
 
+          let serviceUrl = awsInternalUrl;
+          debugger;
+          serviceUrl = replace(serviceUrl, "https", "http");
+          if (last(serviceUrl) === "/") {
+            serviceUrl = trimEnd(serviceUrl, '/');
+          }
+
           // Adds amazon-apigateway configuration
           set(method, "x-amazon-apigateway-integration", {
             connectionId: awsVPCLinkId,
             connectionType: "VPC_LINK",
             httpMethod: toUpper(type),
             type: "http_proxy",
-            uri: `${awsInternalUrl}${endpoint}`,
+            uri: `${serviceUrl}${endpoint}`,
             passthroughBehavior: "when_no_match",
             responses: { default: { statusCode: "200" } },
             requestParameters,
